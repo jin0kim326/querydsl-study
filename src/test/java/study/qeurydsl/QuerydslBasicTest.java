@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 import study.qeurydsl.dto.MemberDto;
 import study.qeurydsl.dto.QMemberDto;
@@ -654,4 +655,51 @@ public class QuerydslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    /**
+     * bulkUpdate (업데이트 쿼리를 한번에 날리고 싶은경우)
+     * 영속성 컨텍스트는 무시하고 디비에만 적용이 되기때문에, 바로 조회하면 디비반영된것이 조회되지 않는 문제
+     * => em.plush, em.clear로 영속성 컨텍스트를 초기화 해주고 조회해야함!
+     */
+    @Test
+    @Commit
+    public void bulkUpdate() throws Exception {
+        // 1 member1 = 10 -> 1 DB member1
+        // 2 member2 = 10 -> 2 DB member3
+        // 3 member3 = 30 -> 3 DB member3
+        // 4 member4 = 40 -> 4 DB member4
+
+        queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        // 1 member1 = 10 -> 1 DB 비회원
+        // 2 member2 = 10 -> 2 DB 비회원
+        // 3 member3 = 30 -> 3 DB member3
+        // 4 member4 = 40 -> 4 DB member4
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+        for (Member member1 : result) {
+            System.out.println("member1 = " + member1);
+        }
+    }
+
+    @Test
+    public void bulkAdd() throws Exception {
+        queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+    }
+
+    @Test
+    public void bulkDelete() throws Exception {
+        queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+    }
 }

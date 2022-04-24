@@ -19,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
-import study.qeurydsl.dto.MemberDto;
-import study.qeurydsl.dto.QMemberDto;
-import study.qeurydsl.dto.UserDto;
+import study.qeurydsl.dto.*;
 import study.qeurydsl.entity.Member;
 import study.qeurydsl.entity.QMember;
 import study.qeurydsl.entity.Team;
@@ -701,5 +699,22 @@ public class QuerydslBasicTest {
                 .delete(member)
                 .where(member.age.gt(18))
                 .execute();
+    }
+
+    @Test
+    public void sqlFuction() throws Exception {
+        List<String> result = queryFactory
+                .select(Expressions.stringTemplate(
+                        "function('replace',{0}, {1},{2})",
+                        member.username,
+                        "member",
+                        "M"
+                ))
+                .from(member)
+                .fetch();
+
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
     }
 }
